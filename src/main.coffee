@@ -11,11 +11,8 @@ nb = (cb, p...) ->
     window.setTimeout(cb, 0, p...)
   return p[0]
 
-
 #image data optimized clamp
 clamp = (v, min=0, max=255) -> Math.min(max, Math.max(min, v))
-
-
 
 #PUBLIC HELPER
 #[context, imagedata, imagedata.data] = getToolbox(c)
@@ -56,6 +53,29 @@ byArray = (a,w,h,cb) ->
     i=i+1
   ctx.putImageData(img,0,0)
   nb(cb,c)
+
+toImage = (c, cb) ->
+  img = new Image()
+  img.src=c.toDataURL("image/png", "")
+  nb(cb,img)
+
+toArray = (c, cb) ->
+  a = []
+  [c, ctx, imgd, px] = getToolbox(c)
+  if Uint8Array then a = new Uint8Array(new ArrayBuffer(px.length))
+  i = 0
+  while i < px.length
+    a[i]=px[i]
+    i=i+1
+  return a
+
+#toDownload
+
+#resizeMinMax
+
+#multieffects
+
+
 
 #EFFECTS
 

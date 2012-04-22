@@ -15,11 +15,16 @@ task 'build', 'Build single application file from source files', ->
       appContents[index] = fileContents
       process() if --remaining is 0
   process = ->
-    fs.writeFile 'lib/doit.coffee', appContents.join('\n\n'), 'utf8', (err) ->
+    fs.writeFile 'lib/dev.coffee', appContents.join('\n\n'), 'utf8', (err) ->
       throw err if err
-      exec 'coffee --compile lib/doit.coffee', (err, stdout, stderr) ->
+      exec 'coffee --compile lib/dev.coffee', (err, stdout, stderr) ->
         throw err if err
         console.log stdout + stderr
-        fs.unlink 'lib/doit.coffee', (err) ->
+        fs.unlink 'lib/dev.coffee', (err) ->
           throw err if err
           console.log 'Done.'
+
+task 'minify', 'Minify the resulting application file after build', ->
+  exec 'java -jar "/Users/franzseo/bin/compiler.jar" --compilation_level SIMPLE_OPTIMIZATIONS --js lib/dev.js --js_output_file lib/min.js', (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
