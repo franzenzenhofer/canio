@@ -1,5 +1,5 @@
 _DEBUG_ = true
-
+canio = {}
 #PRIVATE HELPER
 
 #debug helper
@@ -20,7 +20,7 @@ getToolbox = (c) ->
   [ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data]
 
 #takes either width or height as parameters - or - an object with a width and height - and returns a canvas
-make = (width=800, height=600) ->
+canio.make = make = (width=800, height=600) ->
   if width.width and width.height
     element = width
     width = element.width
@@ -31,21 +31,21 @@ make = (width=800, height=600) ->
   c.height=height
   return c
 
-newToolbox = (width, height) -> getToolbox(make(width, height))
+canio.newToolbox = newToolbox = (width, height) -> getToolbox(make(width, height))
 
-copy = (c, cb) ->
+canio.copy = copy = (c, cb) ->
     [new_c,new_ctx] = newToolbox(c)
     ctx.drawImage(c,0,0,c.width,c.height)
     nb(cb,new_c)
 
-byImage = (img, cb) ->
+canio.byImage = byImage = (img, cb) ->
   if img.width and img.height
     copy(img, cb)
   else
     img.onload(()->byImage(img,cb))
     return false
 
-byArray = (a,w,h,cb) ->
+canio.byArray = byArray = (a,w,h,cb) ->
   [c, ctx, imgd, px] = newToolbox(w,h)
   i = 0
   while i < px.length
@@ -54,12 +54,12 @@ byArray = (a,w,h,cb) ->
   ctx.putImageData(img,0,0)
   nb(cb,c)
 
-toImage = (c, cb) ->
+canio.toImage = toImage = (c, cb) ->
   img = new Image()
   img.src=c.toDataURL("image/png", "")
   nb(cb,img)
 
-toArray = (c, cb) ->
+canio.toArray = toArray = (c, cb) ->
   a = []
   [c, ctx, imgd, px] = getToolbox(c)
   if Uint8Array then a = new Uint8Array(new ArrayBuffer(px.length))
@@ -105,6 +105,8 @@ mirror = (c, cb) ->
   nb(cb,c)
 
 #FILTER
+
+#SIMPLEFILTER
 
 #IMAGE FILTER WRAPPER HELPFER
 
