@@ -11,6 +11,26 @@ nb = (cb, p...) ->
     window.setTimeout(cb, 0, p...)
   return p[0]
 
+fff = (params,defaults) ->
+  first_func = null
+  p2 = []
+  i = 0
+  while i < params.length or i < defaults.length
+    if typeof params[i] is 'function' and not first_func
+        first_func = x
+      else
+        if params[i] isnt null and params[i] isnt undefined
+          p2.push(x)
+        else
+          p2.push(defaults[i])
+  if not first_func
+    throw {name : "NoCallbackGiven", message : "This function needs a callback to work properly"};
+    return false
+  else
+    return p2.unshift(first_func)
+
+
+
 #image data optimized clamp
 clamp = (v, min=0, max=255) -> Math.min(max, Math.max(min, v))
 
@@ -78,26 +98,25 @@ canio.toArray = toArray = (c, cb) ->
 
 
 #EFFECTS
-
-rotateRight = (c, cb) ->
+canio.rotateRight = rotateRight = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(90*Math.PI/180)
   new_ctx.drawImage(c,0,c.height*-1)
   nb(cb,c)
 
-rotateLeft = (c,cb) ->
+canio.rotateLeft = rotateLeft = (c,cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(-90*Math.PI/180)
   new_ctx.drawImage(c,c.width*-1,0)
   nb(cb,c)
 
-flip = (c, cb) ->
+canio.flip = flip = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(Math.PI)
   new_ctx.drawImage(c,c.width*-1,c.height*-1)
   nb(cb,c)
 
-mirror = (c, cb) ->
+canio.mirror = mirror = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.translate(c2.width / 2,0)
   new_ctx.scale(-1, 1)
@@ -116,9 +135,17 @@ ifw = (c, cb, image_filters_func, p...) ->
   nb(() -> new_ctx.putImageData(image_filters_func(imgd, p...),0,0))
   nb(cb,new_c)
 
+makeIfw = (image_filters_func, defaults...) ->
+  return (c, p...) ->
+    defaulted_p = fff(p,defaults)
+    cb = defaulted_p.shift()
+    ifw(c, cb, image_filters_func, defaulted_p...)
+
 #ImageFilters.ConvolutionFilter (srcImageData, matrixX, matrixY, matrix, divisor, bias, preserveAlpha, clamp, color, alpha)
 #ImageFilters.Binarize (srcImageData, threshold)
-binarize = (c, cb, threshold=0.5) -> ifb(c, ImageFilters.Binarize, cb, threshold)
+#binarize = (c, cb, threshold=0.5) -> makeIfw(ImageFilters.Binarize, threshold)
+#canio.binarize = binarize = (c, p...) -> [cb, threshold] = fff(p, 0.5); return makeIfw(ImageFilters.Binarize, threshold)
+canio.binarize = binarize =  makeIfw(ImageFilters.Binarize, 0.5)
 #ImageFilters.BlendAdd (srcImageData, blendImageData, dx, dy)
 #ImageFilters.BlendSubtract (srcImageData, blendImageData, dx, dy)
 #ImageFilters.BoxBlur (srcImageData, hRadius, vRadius, quality)
@@ -146,7 +173,9 @@ binarize = (c, cb, threshold=0.5) -> ifb(c, ImageFilters.Binarize, cb, threshold
 #ImageFilters.GrayScale (srcImageData)
 #ImageFilters.HSLAdjustment (srcImageData, hueDelta, satDelta, lightness)
 #ImageFilters.Invert (srcImageData)
+canio.invert = invert = makeIfw(ImageFilters.Invert)
 #ImageFilters.Mosaic (srcImageData, blockSize)
+canio.mosaic = mosaic = makeIfw(ImageFilters.Mosaic, 10)
 #ImageFilters.Oil (srcImageData, range, levels)
 #ImageFilters.OpacityFilter (srcImageData, opacity)
 #ImageFilters.Posterize (srcImageData, levels)
