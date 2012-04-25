@@ -5,8 +5,9 @@ Canio = {}
 #PRIVATE HELPER
 
 #debug helper
-dlog = (msg) -> console.log msg if _DEBUG_
-
+dlog = (msg) -> console.log(msg) if _DEBUG_
+#dlog = (m) ->
+#  return m
 #nonblocker helper
 nb = (cb, p...) ->
   if cb
@@ -18,18 +19,22 @@ fff = (params,defaults) ->
   p2 = []
   i = 0
   while i < params.length or i < defaults.length
+    console.log(i)
     if typeof params[i] is 'function' and not first_func
-        first_func = x
+        first_func = params[i]
       else
         if params[i] isnt null and params[i] isnt undefined
-          p2.push(x)
+          p2.push(params[i])
         else
           p2.push(defaults[i])
+    i=i+1
   if not first_func
     throw {name : "NoCallbackGiven", message : "This function needs a callback to work properly"};
     return false
   else
-    return p2.unshift(first_func)
+    p2.unshift(first_func)
+    dlog(p2)
+    return p2
 
 
 
@@ -39,7 +44,7 @@ clamp = (v, min=0, max=255) -> Math.min(max, Math.max(min, v))
 #PUBLIC HELPER
 #[context, imagedata, imagedata.data] = getToolbox(c)
 Canio.getToolbox = getToolbox = (c) ->
-  [ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data]
+  [c, ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data]
 
 #takes either width or height as parameters - or - an object with a width and height - and returns a canvas
 Canio.make = make = (width=800, height=600) ->
@@ -56,8 +61,8 @@ Canio.make = make = (width=800, height=600) ->
 Canio.newToolbox = newToolbox = (width, height) -> getToolbox(make(width, height))
 
 Canio.copy = copy = (c, cb) ->
-    [new_c,new_ctx] = s.newToolbox(c)
-    ctx.drawImage(c,0,0,c.width,c.height)
+    [new_c,new_ctx] = newToolbox(c)
+    new_ctx.drawImage(c,0,0,c.width,c.height)
     nb(cb,new_c)
 
 Canio.byImage = byImage =  (img, cb) ->
@@ -95,11 +100,19 @@ Canio.toArray = toArray = (c, cb) ->
 
 #resize
 Canio.resize = resize = (c, p...) ->
-  max = {}
-  min = {}
+  max =
+    width: undefined
+    height: undefined
+
+  min =
+    width: undefined
+    height: undefined
+
   [cb, max['width'], max['height'], min['width'], min['height'], first] = fff(p,800,600, 0,0, undefined)
   second = undefined
-  r = {}
+  r =
+    width: undefined
+    height: undefined
 
   if first is 'width'
     second = 'height'
@@ -107,33 +120,49 @@ Canio.resize = resize = (c, p...) ->
     second = 'width'
   else
     if c.height > c.width
-      first='height'; second='width'
+      first='height'
+      second='width'
     else
-      first='width'; second='height'
-
+      first='width'
+      second='height'
+  console.log('hallo')
+  dlog('first:'+first )
+  dlog('second:'+second )
+  dlog(c[first])
+  #return c
   #scale down
   #w=img.height*(default_width / img.width)
-  if c[first] > max[first] or c[second] > max[second]
+  if c[first+''] > max[first+''] or c[second+''] > max[second+'']
+    dlog('a')
     r[first]=c[second]*max[first]/c[first]
     r[second]=max[second]
     if r[first]>max[first]
+      dlog('b')
       r[second]=c[first]*max[second]/c[second]
       r[first]=max[first]
   #scale up
   else if c[first] < min[first] or c[second] > min[second]
-    r[first]=c[second]*min[first]/c[first]
+    dlog('c')
+    r[first]=c[second] * min[first] / c[first]
     r[second]=min[second]
     if r[first]<min[first]
+      dlog('d')
       r[second]=c[first]*min[second]/c[second]
       r[first]=min[first]
   else
+    dlog('e')
     r[first]=c[first]
     r[second]=c[second]
+    dlog('f')
 
   #cd.context.drawImage(img, 0,0, newwidth, newheight)
   [new_c, new_ctx]=newToolbox(r.width, r.height)
   new_ctx.drawImage(c, 0,0, r.width, r.height)
-  nb(new_c)
+  dlog('g')
+  dlog(new_c)
+  dlog(cb)
+  return nb(cb, new_c)
+  dlog('h')
 
 
 
@@ -242,9 +271,9 @@ Canio.Channels = (channel_string) ->
 #ImageFilters.GrayScale (srcImageData)
 #ImageFilters.HSLAdjustment (srcImageData, hueDelta, satDelta, lightness)
 #ImageFilters.Invert (srcImageData)
-Canio.invert = invert = makeIfw(ImageFilters.Invert)
+Canio.invert = invert = mF(ImageFilters.Invert)
 #ImageFilters.Mosaic (srcImageData, blockSize)
-Canio.mosaic = mosaic = makeIfw(ImageFilters.Mosaic, 10)
+Canio.mosaic = mosaic = mF(ImageFilters.Mosaic, 10)
 #ImageFilters.Oil (srcImageData, range, levels)
 #ImageFilters.OpacityFilter (srcImageData, opacity)
 #ImageFilters.Posterize (srcImageData, levels)

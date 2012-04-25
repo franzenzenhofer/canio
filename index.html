@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Canio - Functional Canvas Lib</title>
+<script src="lib/jquery-1.7.2.min.js"></script>
+<script src="lib/ImageFilters.js"></script>
+<script src="lib/main.js"></script>
+<script src="lib/example.js"></script>
+</head>
+<style type="text/css">
+body {width: 1200px}
+code { display: block; unicode-bidi: embed; font-family: monospace; white-space: pre;  }
+</style>
+<body>
+<h1>Canio - Functional Canvas Photo Effects Lib</h1>
+<h2>MIT License</h2>
+<p>Canio (Canvas I/O) is a
+<ul>
+  <li>Functional</li>
+  <li>HTML5 Canvas Element</li>
+  <li>Photo Effects</li>
+  <li>CoffeeScript Libarary</li>
+</ul>
+
+Canio focuses on reuseability. Canio wastes Canvases like crazy. 
+
+
+</p>
+<hr>
+<h3>
+The Script</h3>
+Even though Canio (in it's minified form) works dependency less, for
+the examples below we use jQuery
+<code>
+&lt;script src="jquery-1.7.2.min.js"&gt;&lt;/script&gt;
+&lt;script src="$PATH_TO_CANIO/lib/min.js"&gt;&lt;/script&gt;
+</code>
+Oh, all examples are ofcourse written in CoffeeScript.
+
+
+
+</hr>
+<hr>
+<h3>An Image</h3>
+First we need an Image
+<div><img src="test.png" id="testimage"></div>
+<code>&lt;img src="test.png" id="testimage" &gt;</code><br>
+Yeah, that's me taking a picture of myself in Colombia.
+<hr>
+<h3>Canio.byImage(img, callback)</h3>
+First we turn an image into a canvas. (<strong>&darr;</strong> That's a Canvas!) 
+<div id="byImage_placeholder"></div>
+<code>
+# the window.load event fires after everything (especially the images)
+# are ready
+$(window).load(() ->
+  #getting the image element
+  img = $('#testimage')[0] 
+  # rendering the canvas
+  # into the &lt;div id="byImage_placeholder"&gt;&lt;/div&gt; element
+  Canio.byImage(img,(c)->$('#byImage_placeholder').html(c)) 
+)
+</code>
+<hr>
+<h3>Canio.resize(canvas, max_width, max_height, min_width,
+min_height, resize_preference, callback)</h3>
+<div id="resize_placeholder"></div>
+
+
+
+
+
+
+<br><br><br>
+<hr>
+<!-- hhmts start -->Last modified: Wed Apr 25 00:55:12 EST 2012 <!-- hhmts end -->
+</body> </html>

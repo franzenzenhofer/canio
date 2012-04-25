@@ -1,3 +1,5 @@
+# FORK of https://github.com/arahaya/ImageFilters.js
+# MIT License
 ImageFilters = {}
 ImageFilters.utils =
   initSampleCanvas: ->
@@ -1541,3 +1543,6 @@ ImageFilters.Twril = (srcImageData, centerX, centerY, radius, angle, edge, smoot
       x += 1
     y += 1
   dstImageData
+
+#export
+window.ImageFilters = ImageFilters

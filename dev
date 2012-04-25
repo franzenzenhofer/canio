@@ -1,0 +1,42 @@
+#! /bin/bash
+#osascript -e 'tell app "Terminal"
+#    do script "serve 3000"
+#end tell'
+#osascript -e 'tell application "Terminal"
+#  activate
+#  tell application "System Events"
+#    keystroke "t" using {command down}
+#  end tell
+#  do script "serve 3000"
+#end tell'
+
+osascript -e 'activate application "Terminal"
+
+tell application "System Events"
+ tell process "Terminal"
+ keystroke "t" using command down
+ end tell
+end tell
+
+delay 1 -- it seems we need this
+
+tell application "Terminal"
+ do script "serve 3000" in the last tab of window 1
+end tell
+
+tell application "System Events"
+ tell process "Terminal"
+ keystroke "t" using command down
+ end tell
+end tell
+
+delay 1 -- it seems we need this
+
+tell application "Terminal"
+ do script "ls" in the last tab of window 1
+end tell'
+
+open -a /Applications/TextWrangler.app lib/main.js 
+open -a /Applications/Aquamacs.app src/*.coffee index.html
+open http://localhost:3000/
+coffee --watch --compile --output lib/ src/
