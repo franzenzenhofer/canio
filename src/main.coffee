@@ -1,7 +1,5 @@
-_DEBUG_ = true
-
-#Canio, the object we will export in the final scope
-Canio = {}
+Canio = {};
+Canio._DEBUG_ = _DEBUG_ = true;
 #PRIVATE HELPER
 
 #debug helper
@@ -10,9 +8,9 @@ dlog = (msg) -> console.log(msg) if _DEBUG_
 #  return m
 #nonblocker helper
 nb = (cb, p...) ->
-  if cb
+  if cb and typeof cb is 'function'
     window.setTimeout(cb, 0, p...)
-  return p[0]
+  return p?[0]
 
 fff = (params,defaults) ->
   first_func = null
@@ -47,18 +45,21 @@ Canio.getToolbox = getToolbox = (c) ->
   [c, ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data]
 
 #takes either width or height as parameters - or - an object with a width and height - and returns a canvas
-Canio.make = make = (width=800, height=600) ->
+Canio.make = make = (width=800, height=600, origin) ->
   if width.width and width.height
     element = width
     width = element.width
     height = element.height
+    origin = (element?.getAttribute?('id') or element?.getAttribute?('origin'))
+
 
   c=document.createElement('canvas')
   c.width=width
   c.height=height
+  c.setAttribute('origin', origin) if origin
   return c
 
-Canio.newToolbox = newToolbox = (width, height) -> getToolbox(make(width, height))
+Canio.newToolbox = newToolbox = (width, height, origin) -> getToolbox(make(width, height, origin))
 
 Canio.copy = copy = (c, cb) ->
     [new_c,new_ctx] = newToolbox(c)
@@ -101,18 +102,18 @@ Canio.toArray = toArray = (c, cb) ->
 #resize
 Canio.resize = resize = (c, p...) ->
   max =
-    width: undefined
-    height: undefined
+    width: null
+    height: null
 
   min =
-    width: undefined
-    height: undefined
+    width: null
+    height: null
 
-  [cb, max['width'], max['height'], min['width'], min['height'], first] = fff(p,800,600, 0,0, undefined)
-  second = undefined
+  [cb, max['width'], max['height'], min['width'], min['height'], first] = fff(p,800, null, null, null, null, null)
+  second = null
   r =
-    width: undefined
-    height: undefined
+    width: null
+    height: null
 
   if first is 'width'
     second = 'height'
@@ -122,32 +123,44 @@ Canio.resize = resize = (c, p...) ->
     if c.height > c.width
       first='height'
       second='width'
+      dlog('hochformat')
     else
+      dlog('height'+c.height)
+      dlog('width'+c.width)
       first='width'
       second='height'
+      dlog('querformat')
   console.log('hallo')
-  dlog('first:'+first )
-  dlog('second:'+second )
+  dlog('first: '+first )
+  dlog('second: '+second )
   dlog(c[first])
   #return c
   #scale down
   #w=img.height*(default_width / img.width)
-  if c[first+''] > max[first+''] or c[second+''] > max[second+'']
+  if max[first] and (c[first] > max[first] or c[second] > max[second])
     dlog('a')
-    r[first]=c[second]*max[first]/c[first]
-    r[second]=max[second]
-    if r[first]>max[first]
+    r[second]=c[second]*max[first]/c[first]
+    r[first]=max[first]
+    if r[second]>max[second]
       dlog('b')
-      r[second]=c[first]*max[second]/c[second]
-      r[first]=max[first]
-  #scale up
-  else if c[first] < min[first] or c[second] > min[second]
+      r[first]=c[first]*max[second]/c[second]
+      r[second]=max[second]
+
+  #scale down
+  #if c[first] > max[first]
+  #  dlog(first+'>'+max[first])
+  #  r[first]=max[first]
+  #  r[second]=c[second]*max[first]/c[first]
+  #  if r[second] > max[second]
+  #
+  # #scale up
+  else if min[first] and (c[first] < min[first] or c[second] > min[second])
     dlog('c')
-    r[first]=c[second] * min[first] / c[first]
+    r[first]=c[first] * min[second] / c[second]
     r[second]=min[second]
     if r[first]<min[first]
       dlog('d')
-      r[second]=c[first]*min[second]/c[second]
+      r[second]=c[second]*min[first]/c[first]
       r[first]=min[first]
   else
     dlog('e')
@@ -156,13 +169,23 @@ Canio.resize = resize = (c, p...) ->
     dlog('f')
 
   #cd.context.drawImage(img, 0,0, newwidth, newheight)
-  [new_c, new_ctx]=newToolbox(r.width, r.height)
+  #dlog('inresizedebugoutput')
+  #dlog((c?.getAttribute('id') or c?.getAttribute('source')))
+  [new_c, new_ctx]=newToolbox(r.width, r.height, (c?.getAttribute('id') or c?.getAttribute('origin')))
   new_ctx.drawImage(c, 0,0, r.width, r.height)
   dlog('g')
   dlog(new_c)
   dlog(cb)
   return nb(cb, new_c)
-  dlog('h')
+
+Canio.scale = scale = (c, p...) ->
+  [cb, x]=fff(p, 1)
+  new_width = c.width*x
+  new_height = c.height*x
+  [new_c, new_ctx]=newToolbox(new_width, new_height, (c?.getAttribute('id') or c?.getAttribute('origin')))
+  new_ctx.drawImage(c, 0,0, new_width, new_height)
+  nb(cb, new_c)
+
 
 
 
