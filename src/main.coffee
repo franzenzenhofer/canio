@@ -180,11 +180,18 @@ Canio.resize = resize = (c, p...) ->
 
 Canio.scale = scale = (c, p...) ->
   [cb, x]=fff(p, 1)
+  dlog('scale it by '+x)
   new_width = c.width*x
   new_height = c.height*x
   [new_c, new_ctx]=newToolbox(new_width, new_height, (c?.getAttribute('id') or c?.getAttribute('origin')))
   new_ctx.drawImage(c, 0,0, new_width, new_height)
   nb(cb, new_c)
+
+Canio.crop = crop = (c, p...) ->
+  [cb, crop_x, crop_y, crop_width, crop_height] = fff(p, 0, 0, c.width/2, c.height/2)
+  [new_c, new_ctx]=newToolbox(crop_width, crop_height, (c?.getAttribute('id') or c?.getAttribute('origin')))
+  new_ctx.drawImage(c, crop_x, crop_y, crop_width, crop_height, 0,0,crop_width, crop_height)
+  nb(cb,new_c)
 
 
 

@@ -7,7 +7,7 @@
 <script src="lib/example.js"></script>
 </head>
 <style type="text/css">
-body {width: 1200px}
+body {width: 800px}
 code { display: block; unicode-bidi: embed; font-family: monospace; white-space: pre; background-color:lightgray; margin:5px; padding: 5px; }
 .code { unicode-bidi: embed; font-family: monospace; white-space: pre; background-color:lightgray; }
 </style>
@@ -49,7 +49,7 @@ Yeah, that's me sitting on a rock in Colombia.
 <h3>Canio.byImage(img, callback)</h3>
 First we turn an image into a canvas. (<strong>&darr;</strong> That's a Canvas!) 
 <div id="byImage_placeholder"></div>
-<code># example-code 1
+<code># example 1
 # the window.load event fires after everything (especially the images)
 # are ready
 $(window).load(() ->
@@ -60,11 +60,12 @@ $(window).load(() ->
   Canio.byImage(img,(c)->$('#byImage_placeholder').html(c)) 
 )
 </code>
+Ok, one important part when working with images is, the image must be 'loaded'. This means, that the image must not only be an element in the DOM, but must be completely loaded, otherwise everything you want to do with the image won't work - especially turning it into an image won't work. There are two ways to solve this: either wait until the <span class="code">$(img).on('load', ...)</span> event has been fired, or the <span class="code">$(window).on('load', ...)</span> event has been fired (which fires after all the external dependencies has been loaded). Refusing to wait until to the image has been 'loaded' will result into strange bugs down the road. Said that: Canio includes a saftey logic that waits for images to load.
 <hr>
 <h3>Canio.resize(canvas, max_width, max_height, min_width,
 min_height, resize_preference, callback)</h3>
 <div id="resize_placeholder"></div>
-<code>  #example-code 2
+<code>  #example 2
   Canio.byImage(img,(c)->
     Canio.resize(c, 400,300, 200, 100, (c) ->
       c.id='resizedcanvas'
@@ -76,7 +77,7 @@ min_height, resize_preference, callback)</h3>
 <h3>on('canvasready')</h3>
 In this tutorial, as in real life, we do not want to create canvases out of the same image over and over again, in the same time we don't want to go to callback-hell. Throwing a custom event when a canvas is ready helps (a little). 
 
-<code>  #example-code 3
+<code>  #example 3
   img = $('#testimage')[0]
   $(img).on('canvasready', (event,c)->
     Canio.resize(c, 400, 300, 200, 100, (c) ->
@@ -96,7 +97,31 @@ Basically we fire a "<b>canvasready</b>" event after the image was successfully 
 <b>Note:</b> What is <span class="code">c.id='resizedcanvas'</span> and <span class="code">c.id='canvascool'</span> actuall doing? Well, what it says, it sets the  <span class="code">id=""</span> attribute of the new canvas tag. Why is this important? Oh boy, we are taking a deep dive into the Canio lib now. To keep it simple. Every time a new canvas gets created (with every functionc call) it sets the custom <span class="code">origin=""</span> attribute of the canvas tag, to the last  <span class="code">id=""</span> attribute it encountered. Withthe <span class="code">origin=""</span> attribute the canvas basically know the id of its father (if he had a name, otherwise he knows the name of its grandfather or grand-grandfather ...). As live is much simple if every element has a unique id, it's best partice to set a unique id as soon as you display an element on-page (and especially if you want to reuse it as input later).
 i.e.: the canvas of "example-code 3" has the html code <span class="code">&lt;canvas width="400" height="300" origin="canvasbyimage" id="resizedcanvas"&gt;&lt;/canvas&gt;</span>
 </p>
-
+<hr>
+<h3>Canio.scale(canvas, factor, callback)</h3>
+<div id="scale_placeholder"></div>
+Ok, not lets take the canvas (not the resized one, but the one we created from the image) and scale it down to 10%
+<code>  #example 4
+  $(img).on('canvasready', (e,c)->
+    Canio.scale(c, 0.1, (c) ->
+      c.id='scaledcanvas'
+      $('#scale_placeholder').html(c)
+      )
+    )
+</code>
+the outcome is
+<code>&lt;canvas width="80" height="60" origin="canvasbyimage" id="scaledcanvas">&gt;&lt;/canvas&gt;</code>
+<hr>
+<h3>Canio.crop(canvas, crop_x, crop_y, crop_width, crop_height, callback)</h3>
+<div id="crop_placeholder"></div>
+<code>  #example 5
+  $(img).on('canvasready', (e,c)->
+    Canio.crop(c, 580, 330, 100, 100, (c) ->
+      c.id='cropedcanvas'
+      $('#crop_placeholder').html(c)
+      )
+    )
+</code>
 
 
 
@@ -104,5 +129,5 @@ i.e.: the canvas of "example-code 3" has the html code <span class="code">&lt;ca
 
 <br><br><br>
 <hr>
-<!-- hhmts start -->Last modified: Fri Apr 27 23:59:31 EST 2012 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun Apr 29 00:01:36 EST 2012 <!-- hhmts end -->
 </body> </html>

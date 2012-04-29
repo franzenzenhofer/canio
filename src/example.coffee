@@ -15,6 +15,20 @@ $(window).load(() ->
       )
     )
 
+  $(img).on('canvasready', (e,c)->
+    Canio.scale(c, 0.1, (c) ->
+      c.id='scaledcanvas'
+      $('#scale_placeholder').html(c)
+      )
+    )
+
+  $(img).on('canvasready', (e,c)->
+    Canio.crop(c, 580, 330, 100, 100, (c) ->
+      c.id='cropedcanvas'
+      $('#crop_placeholder').html(c)
+      )
+    )
+
   Canio.byImage(img,(c) ->
     $('#byImage_placeholder').html(c)
     c.id='canvasbyimage'
