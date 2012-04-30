@@ -217,7 +217,7 @@ ImageFilters.ConvolutionFilter = (srcImageData, matrixX, matrixY, matrix, diviso
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   divisor = divisor or 1
   bias = bias or 0
@@ -294,7 +294,7 @@ ImageFilters.Binarize = (srcImageData, threshold) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   threshold = 0.5  if isNaN(threshold)
   threshold *= 255
@@ -312,7 +312,7 @@ ImageFilters.BlendAdd = (srcImageData, blendImageData, dx, dy) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   blendPixels = blendImageData.data
   v = undefined
@@ -331,7 +331,7 @@ ImageFilters.BlendSubtract = (srcImageData, blendImageData, dx, dy) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   blendPixels = blendImageData.data
   v = undefined
@@ -416,9 +416,9 @@ ImageFilters.BoxBlur = do (->
     srcWidth = srcImageData.width
     srcHeight = srcImageData.height
     srcLength = srcPixels.length
-    dstImageData = @utils.createImageData(srcWidth, srcHeight)
+    dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
     dstPixels = dstImageData.data
-    tmpImageData = @utils.createImageData(srcWidth, srcHeight)
+    tmpImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
     tmpPixels = tmpImageData.data
     i = 0
 
@@ -663,9 +663,9 @@ ImageFilters.Brightness = (srcImageData, brightness) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     value += brightness
     (if (value > 255) then 255 else value)
 
@@ -676,7 +676,7 @@ ImageFilters.BrightnessContrastGimp = (srcImageData, brightness, contrast) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   p4 = Math.PI / 4
   brightness /= 100
@@ -690,7 +690,7 @@ ImageFilters.BrightnessContrastGimp = (srcImageData, brightness, contrast) ->
     avg += (srcPixels[i] * 19595 + srcPixels[i + 1] * 38470 + srcPixels[i + 2] * 7471) >> 16
     i += 4
   avg = avg / (srcLength / 4)
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     if brightness < 0
       value = value * (1 + brightness)
     else value = value + ((255 - value) * brightness)  if brightness > 0
@@ -704,11 +704,11 @@ ImageFilters.BrightnessContrastPhotoshop = (srcImageData, brightness, contrast) 
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   brightness = (brightness + 100) / 100
   contrast = (contrast + 100) / 100
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     value *= brightness
     value = (value - 127.5) * contrast + 127.5
     value + 0.5 | 0
@@ -727,13 +727,13 @@ ImageFilters.Channels = (srcImageData, channel) ->
   @ColorMatrixFilter srcImageData, matrix
 
 ImageFilters.Clone = (srcImageData) ->
-  @Copy srcImageData, @utils.createImageData(srcImageData.width, srcImageData.height)
+  @Copy srcImageData, ImageFilters.utils.createImageData(srcImageData.width, srcImageData.height)
 
 ImageFilters.CloneBuiltin = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
-  canvas = @utils.getSampleCanvas()
-  context = @utils.getSampleContext()
+  canvas = ImageFilters.utils.getSampleCanvas()
+  context = ImageFilters.utils.getSampleContext()
   dstImageData = undefined
   canvas.width = srcWidth
   canvas.height = srcHeight
@@ -748,7 +748,7 @@ ImageFilters.ColorMatrixFilter = (srcImageData, matrix) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   m0 = matrix[0]
   m1 = matrix[1]
@@ -794,7 +794,7 @@ ImageFilters.ColorTransformFilter = (srcImageData, redMultiplier, greenMultiplie
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   i = undefined
   v = undefined
@@ -819,7 +819,7 @@ ImageFilters.Crop = (srcImageData, x, y, width, height) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(width, height)
+  dstImageData = ImageFilters.utils.createImageData(width, height)
   dstPixels = dstImageData.data
   srcLeft = Math.max(x, 0)
   srcTop = Math.max(y, 0)
@@ -854,8 +854,8 @@ ImageFilters.Crop = (srcImageData, x, y, width, height) ->
 ImageFilters.CropBuiltin = (srcImageData, x, y, width, height) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
-  canvas = @utils.getSampleCanvas()
-  context = @utils.getSampleContext()
+  canvas = ImageFilters.utils.getSampleCanvas()
+  context = ImageFilters.utils.getSampleContext()
   canvas.width = srcWidth
   canvas.height = srcHeight
   context.putImageData srcImageData, 0, 0
@@ -869,7 +869,7 @@ ImageFilters.Desaturate = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   i = 0
 
@@ -952,7 +952,7 @@ ImageFilters.Dither = (srcImageData, levels) ->
   while i < levels
     levelMap[i] = (255 * i) / levelsMinus1
     i += 1
-  posterize = @utils.buildMap((value) ->
+  posterize = ImageFilters.utils.buildMap((value) ->
     ret = levelMap[j]
     k += levels
     if k > 255
@@ -1048,7 +1048,7 @@ ImageFilters.Flip = (srcImageData, vertical) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   x = undefined
   y = undefined
@@ -1077,9 +1077,9 @@ ImageFilters.Gamma = (srcImageData, gamma) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     value = (255 * Math.pow(value / 255, 1 / gamma) + 0.5)
     (if value > 255 then 255 else value + 0.5 | 0)
 
@@ -1090,7 +1090,7 @@ ImageFilters.GrayScale = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   i = 0
 
@@ -1106,13 +1106,13 @@ ImageFilters.HSLAdjustment = (srcImageData, hueDelta, satDelta, lightness) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   hueDelta /= 360
   satDelta /= 100
   lightness /= 100
-  rgbToHsl = @utils.rgbToHsl
-  hslToRgb = @utils.hslToRgb
+  rgbToHsl = ImageFilters.utils.rgbToHsl
+  hslToRgb = ImageFilters.utils.hslToRgb
   h = undefined
   s = undefined
   l = undefined
@@ -1146,9 +1146,9 @@ ImageFilters.Invert = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     255 - value
 
   dstImageData
@@ -1158,7 +1158,7 @@ ImageFilters.Mosaic = (srcImageData, blockSize) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   cols = Math.ceil(srcWidth / blockSize)
   rows = Math.ceil(srcHeight / blockSize)
@@ -1226,7 +1226,7 @@ ImageFilters.Oil = (srcImageData, range, levels) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   index = 0
   rh = []
@@ -1306,7 +1306,7 @@ ImageFilters.OpacityFilter = (srcImageData, opacity) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   i = 0
 
@@ -1323,7 +1323,7 @@ ImageFilters.Posterize = (srcImageData, levels) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   levels = (if levels < 2 then 2 else (if levels > 255 then 255 else levels))
   levelMap = []
@@ -1335,7 +1335,7 @@ ImageFilters.Posterize = (srcImageData, levels) ->
   while i < levels
     levelMap[i] = (255 * i) / levelsMinus1
     i += 1
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     ret = levelMap[j]
     k += levels
     if k > 255
@@ -1350,9 +1350,9 @@ ImageFilters.Rescale = (srcImageData, scale) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     value *= scale
     (if (value > 255) then 255 else value + 0.5 | 0)
 
@@ -1363,7 +1363,7 @@ ImageFilters.ResizeNearestNeighbor = (srcImageData, width, height) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(width, height)
+  dstImageData = ImageFilters.utils.createImageData(width, height)
   dstPixels = dstImageData.data
   xFactor = srcWidth / width
   yFactor = srcHeight / height
@@ -1392,7 +1392,7 @@ ImageFilters.Resize = (srcImageData, width, height) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(width, height)
+  dstImageData = ImageFilters.utils.createImageData(width, height)
   dstPixels = dstImageData.data
   xFactor = srcWidth / width
   yFactor = srcHeight / height
@@ -1403,7 +1403,7 @@ ImageFilters.Resize = (srcImageData, width, height) ->
   while y < height
     x = 0
     while x < width
-      @utils.copyBilinear srcPixels, x * xFactor, y * yFactor, srcWidth, srcHeight, dstPixels, dstIndex, 0
+      ImageFilters.utils.copyBilinear srcPixels, x * xFactor, y * yFactor, srcWidth, srcHeight, dstPixels, dstIndex, 0
       dstIndex += 4
       x += 1
     y += 1
@@ -1412,8 +1412,8 @@ ImageFilters.Resize = (srcImageData, width, height) ->
 ImageFilters.ResizeBuiltin = (srcImageData, width, height) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
-  canvas = @utils.getSampleCanvas()
-  context = @utils.getSampleContext()
+  canvas = ImageFilters.utils.getSampleCanvas()
+  context = ImageFilters.utils.getSampleContext()
   dstImageData = undefined
   canvas.width = Math.max(srcWidth, width)
   canvas.height = Math.max(srcHeight, height)
@@ -1432,7 +1432,7 @@ ImageFilters.Sepia = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   r = undefined
   g = undefined
@@ -1459,9 +1459,9 @@ ImageFilters.Solarize = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
-  @utils.mapRGB srcPixels, dstPixels, (value) ->
+  ImageFilters.utils.mapRGB srcPixels, dstPixels, (value) ->
     (if value > 127 then (value - 127.5) * 2 else (127.5 - value) * 2)
 
   dstImageData
@@ -1471,7 +1471,7 @@ ImageFilters.Transpose = (srcImageData) ->
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcHeight, srcWidth)
+  dstImageData = ImageFilters.utils.createImageData(srcHeight, srcWidth)
   dstPixels = dstImageData.data
   srcIndex = undefined
   dstIndex = undefined
@@ -1494,7 +1494,7 @@ ImageFilters.Twril = (srcImageData, centerX, centerY, radius, angle, edge, smoot
   srcWidth = srcImageData.width
   srcHeight = srcImageData.height
   srcLength = srcPixels.length
-  dstImageData = @utils.createImageData(srcWidth, srcHeight)
+  dstImageData = ImageFilters.utils.createImageData(srcWidth, srcHeight)
   dstPixels = dstImageData.data
   centerX = srcWidth * centerX
   centerY = srcHeight * centerY
@@ -1532,7 +1532,7 @@ ImageFilters.Twril = (srcImageData, centerX, centerY, radius, angle, edge, smoot
         tx = centerX + distance * Math.cos(a)
         ty = centerY + distance * Math.sin(a)
         if smooth
-          @utils.copyBilinear srcPixels, tx, ty, srcWidth, srcHeight, dstPixels, dstIndex, edge
+          ImageFilters.utils.copyBilinear srcPixels, tx, ty, srcWidth, srcHeight, dstPixels, dstIndex, edge
         else
           srcIndex = (ty + 0.5 | 0) * srcWidth + (tx + 0.5 | 0) << 2
           dstPixels[dstIndex] = srcPixels[srcIndex]

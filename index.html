@@ -60,7 +60,7 @@ $(window).load(() ->
   Canio.byImage(img,(c)->$('#byImage_placeholder').html(c)) 
 )
 </code>
-Ok, one important part when working with images is, the image must be 'loaded'. This means, that the image must not only be an element in the DOM, but must be completely loaded, otherwise everything you want to do with the image won't work - especially turning it into an image won't work. There are two ways to solve this: either wait until the <span class="code">$(img).on('load', ...)</span> event has been fired, or the <span class="code">$(window).on('load', ...)</span> event has been fired (which fires after all the external dependencies has been loaded). Refusing to wait until to the image has been 'loaded' will result into strange bugs down the road. Said that: Canio includes a saftey logic that waits for images to load.
+Ok, one important part when working with images is, the image must be 'loaded'. This means, that the image must not only be an element in the DOM, but must be completely loaded, otherwise everything you want to do with the image won't work - especially turning it into a canvas won't work. There are two ways to solve this: either wait until the <span class="code">$(img).on('load', ...)</span> event has been fired, or the <span class="code">$(window).on('load', ...)</span> event has been fired (which fires after all the external dependencies has been loaded). Refusing to wait until to the image has been 'loaded' will result into strange bugs down the road. Said that: Canio includes a saftey logic that waits for images to load.
 <hr>
 <h3>Canio.resize(canvas, max_width, max_height, min_width,
 min_height, resize_preference, callback)</h3>
@@ -75,7 +75,7 @@ min_height, resize_preference, callback)</h3>
 </code>
 <hr>
 <h3>on('canvasready')</h3>
-In this tutorial, as in real life, we do not want to create canvases out of the same image over and over again, in the same time we don't want to go to callback-hell. Throwing a custom event when a canvas is ready helps (a little). 
+In this tutorial, as in real life, we do not want to create canvases out of the same image over and over again, in the same time we don't want to go to callback-hell (sticking callbacks in callbacks of callbacks). Throwing a custom events from time to time i.e.: when a canvas is ready helps (a little). 
 
 <code>  #example 3
   img = $('#testimage')[0]
@@ -94,7 +94,7 @@ In this tutorial, as in real life, we do not want to create canvases out of the 
 </code>
 Basically we fire a "<b>canvasready</b>" event after the image was successfully transformed into a canvas. The event forwards the newly created canvas to the function. I (still) love jQuery, but i didn't want to bring in any jQuery dependencies - so you have, if you want to, implement the <span class="code">trigger('canvasready', c)</span> logic yourself. just keep in mind, that "example-code 2" and "example-code 3" basically do the same stuff. It's just a question of style and application logic.
 <p class="note">
-<b>Note:</b> What is <span class="code">c.id='resizedcanvas'</span> and <span class="code">c.id='canvascool'</span> actuall doing? Well, what it says, it sets the  <span class="code">id=""</span> attribute of the new canvas tag. Why is this important? Oh boy, we are taking a deep dive into the Canio lib now. To keep it simple. Every time a new canvas gets created (with every functionc call) it sets the custom <span class="code">origin=""</span> attribute of the canvas tag, to the last  <span class="code">id=""</span> attribute it encountered. Withthe <span class="code">origin=""</span> attribute the canvas basically know the id of its father (if he had a name, otherwise he knows the name of its grandfather or grand-grandfather ...). As live is much simple if every element has a unique id, it's best partice to set a unique id as soon as you display an element on-page (and especially if you want to reuse it as input later).
+<b>Note:</b> What is <span class="code">c.id='resizedcanvas'</span> and <span class="code">c.id='canvascool'</span> actuall doing? Well, what it says, it sets the  <span class="code">id=""</span> attribute of the new canvas tag. Why is this important? Oh boy, we are taking a deep dive into the Canio lib now. To keep it simple. Every time a new canvas gets created (with every functionc call) it sets the custom <span class="code">origin=""</span> attribute of the canvas tag, to the last  <span class="code">id=""</span> attribute it encountered. Withthe <span class="code">origin=""</span> attribute the canvas basically know the id of its father (if he had a name, otherwise he knows the name of its grandfather or grand-grandfather ...). As live is much simple if every element has a unique id, it's a good idea to set a unique id as soon as you display an element on-page (and it's an even better idea want to reuse the canvas as input later).
 i.e.: the canvas of "example-code 3" has the html code <span class="code">&lt;canvas width="400" height="300" origin="canvasbyimage" id="resizedcanvas"&gt;&lt;/canvas&gt;</span>
 </p>
 <hr>
@@ -122,12 +122,70 @@ the outcome is
       )
     )
 </code>
-
-
-
+<hr>
+<h3>Canio.invert(canvas, callback)</h3>
+<div id="invert_placeholder"></div>
+<code>  $(img).on('canvasready', (e,c)->
+    Canio.invert(c, (c) ->
+      $('#invert_placeholder').html(c)
+      )
+    )</code>
+<hr>
+<h3>Canio.mosaic(canvas, blocksize, callback)</h3>
+<div id="mosaic_placeholder"></div>
+<code>  $(img).on('canvasready', (e,c)->
+    Canio.mosaic(c, 8, (c) ->
+      $('#mosaic_placeholder').html(c)
+      )
+    )</code>
+blocksize ... positve pixel size integer
+<hr>
+<h3>Canio.binarize(canvas, threshold, callback)</h3>
+<div id="binarize_placeholder"></div>
+<code>  $(img).on('canvasready', (e,c)->
+    Canio.binarize(c, 0.5, (c) ->
+      $('#binarize_placeholder').html(c)
+      )
+    )</code>
+threshold ... value between 0 and 2 makes sense
+<hr>
+<h3>Canio.noise(canvas, amount, callback)</h3>
+<div id="noise_placeholder"></div>
+<code></code>
+amount ... amount of noise, from 0 to n
+<hr>
+<h3>Canio.vignette(canvas, white, black, callback)</h3>
+<div id="vignette_placeholder"></div>
+<code></code>
+<ul>
+  <li>white ... 0 to 1</li>
+  <li>black ... 0 to 1</li>
+</ul>
+<hr>
+<h3>Canio.saturate(canvas, t, callback)</h3>
+<div id="saturate_placeholder"></div>
+<code></code>
+<ul>
+  <li>t ... 0 to 1</li>
+</ul>
+<hr>
+<h3>Canio.desaturate(canvas, t, callback)</h3>
+<div id="desaturate_placeholder"></div>
+<code></code>
+<ul>
+  <li>t ... 0 to 1</li>
+</ul>
+<hr>
+<h3>Canio.curve(canvas, callback)</h3>
+<div id="curve_placeholder"></div>
+<code></code>
+<hr>
+<h3>Canio.screen(canvas, green, red, blue, strength, callback)</h3>
+<div id="screen_placeholder"></div>
+<code></code>
 
 
 <br><br><br>
 <hr>
-<!-- hhmts start -->Last modified: Sun Apr 29 00:01:36 EST 2012 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun Apr 29 23:30:32 EST 2012 <!-- hhmts end -->
 </body> </html>

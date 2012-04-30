@@ -29,6 +29,60 @@ $(window).load(() ->
       )
     )
 
+  $(img).on('canvasready', (e,c)->
+    Canio.invert(c, (c) ->
+      $('#invert_placeholder').html(c)
+      )
+    )
+
+  $(img).on('canvasready', (e,c)->
+    Canio.mosaic(c, 8, (c) ->
+      $('#mosaic_placeholder').html(c)
+      )
+    )
+
+  $(img).on('canvasready', (e,c)->
+    Canio.binarize(c, 0.5, (c) ->
+      $('#binarize_placeholder').html(c)
+      )
+    )
+
+  $(img).on('canvasready', (e,c)->
+    Canio.noise(c, 90, (c) ->
+      $('#noise_placeholder').html(c)
+      )
+    )
+  #vignette
+  $(img).on('canvasready', (e,c)->
+    Canio.vignette(c, 0.2, 0.8, (c) ->
+      $('#vignette_placeholder').html(c)
+      )
+    )
+  #saturate
+  $(img).on('canvasready', (e,c)->
+    Canio.saturate(c, 0.2, (c) ->
+      $('#saturate_placeholder').html(c)
+      )
+    )
+  #desaturate
+  $(img).on('canvasready', (e,c)->
+    Canio.desaturate(c, 0.4, (c) ->
+      $('#desaturate_placeholder').html(c)
+      )
+    )
+  #curve
+  $(img).on('canvasready', (e,c)->
+    Canio.curve(c, (c) ->
+      $('#curve_placeholder').html(c)
+      )
+    )
+  #screen
+  $(img).on('canvasready', (e,c)->
+    Canio.screen(c, 227, 12, 169, 0.9, (c) ->
+      $('#screen_placeholder').html(c)
+      )
+    )
+
   Canio.byImage(img,(c) ->
     $('#byImage_placeholder').html(c)
     c.id='canvasbyimage'
