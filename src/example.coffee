@@ -83,11 +83,37 @@ $(window).load(() ->
       )
     )
 
+  #viewfinder border
+  $(img).on('canvasready', (e,c)->
+    Canio.viewfinder(c, (c) ->
+      $('#viewfinder_placeholder').html(c)
+      )
+    )
+
+  #oldschool border
+  $(img).on('canvasready', (e,c)->
+    Canio.oldschool(c, (c) ->
+      $('#oldschool_placeholder').html(c)
+      )
+    )
   Canio.byImage(img,(c) ->
     $('#byImage_placeholder').html(c)
     c.id='canvasbyimage'
     $(img).trigger('canvasready', c)
     )
+
+  Canio.byImage($('#viewfinder')[0],(c) ->
+    Canio.toImage(c, (ii)->
+      $('#byImage_placeholder').html(ii)
+      )
+    )
+  #  $('#byImage_placeholder').html(c)
+  #  #c.id='canvasbyimage'
+ #  Canio.resize(c, 400, 400, (c) ->
+  #  #$(img).trigger('canvasready', c)
+
+  #    )
+  #  )
   #todo when a canvas gets created, throw an event
 
 #  Canio.byImage(img,(c)->

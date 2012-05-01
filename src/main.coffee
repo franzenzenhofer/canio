@@ -1,29 +1,28 @@
 Canio = {};
 Canio._DEBUG_ = _DEBUG_ = true;
+
 #PRIVATE HELPER
 
 #debug helper
 dlog = (msg) -> console.log(msg) if _DEBUG_
-#dlog = (m) ->
-#  return m
-#nonblocker helper
-nb = (cb, p...) ->
-  if cb and typeof cb is 'function'
-    window.setTimeout(cb, 0, p...)
-  return p?[0]
+#some functions can't work without callback
+cbr = (cb,function_name) -> until cb then throw new Error('Callback required for '+function_name)
 
 #stupid isfunction check
 isFunction = (functionToCheck) ->
   getType = {}
   return functionToCheck and getType.toString.call(functionToCheck) is '[object Function]'
 
+#nonblocker helper
+nb = (cb, p...) ->
+  if cb and isFunction(cb)
+    window.setTimeout(cb, 0, p...)
+  return p?[0]
+
 fff = (params,defaults...) ->
   first_func = null
   p2 = []
   i = 0
-  #dlog('inFFF')
-  #dlog(params)
-  #dlog(defaults)
   while i < params.length or i < defaults.length
     if typeof params[i] is 'function' and not first_func
         first_func = params[i]
@@ -34,25 +33,27 @@ fff = (params,defaults...) ->
           p2.push(defaults[i])
     i=i+1
   if not first_func
-    throw {name : "NoCallbackGiven", message : "This function needs a callback to work properly"};
-    return false
-  else
-    p2.unshift(first_func)
-    dlog(p2)
-    return p2
+    # throw {name : "NoCallbackGiven", message : "This function needs a callback to work properly"};
+    # return false
+    # we return a dummy callback
+    first_func = (c)->null
+  p2.unshift(first_func)
+  dlog(p2)
+  return p2
 
-
-
-#image data optimized clamp
-clamp = (v, min=0, max=255) -> Math.min(max, Math.max(min, v))
+#private image data optimized clamp
+clamp = (v, min=0, max=255) ->Math.min(max, Math.max(min, v))
+#END PRIVATE HELPFER
 
 #PUBLIC HELPER
+#all PUBLIC HELPER are availabe via a Canio method and via an internal function name
 #[context, imagedata, imagedata.data] = getToolbox(c)
-Canio.getToolbox = getToolbox = (c) ->
-  [c, ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data]
+Canio.getToolbox = getToolbox = (c,cb) ->
+  nb(cb, [c, ctx = c.getContext('2d'), img_data = ctx.getImageData(0,0,c.width,c.height), img_data.data])
 
 #takes either width or height as parameters - or - an object with a width and height - and returns a canvas
-Canio.make = make = (width=800, height=600, origin) ->
+Canio.make = make = (p...) ->
+  [cb, width, height, origin]=fff(p,800,600)
   if width.width and width.height
     element = width
     width = element.width
@@ -64,9 +65,11 @@ Canio.make = make = (width=800, height=600, origin) ->
   c.width=width
   c.height=height
   c.setAttribute('origin', origin) if origin
-  return c
+  nb(cb,c)
 
-Canio.newToolbox = newToolbox = (width, height, origin) -> getToolbox(make(width, height, origin))
+Canio.newToolbox = newToolbox = (p...) ->
+  [cb, width, height, origin] = fff(p)
+  Canio.getToolbox(make(width, height, origin),cb)
 
 Canio.copy = copy = (c, cb) ->
     [new_c,new_ctx] = newToolbox(c)
@@ -75,10 +78,14 @@ Canio.copy = copy = (c, cb) ->
 
 Canio.byImage = byImage =  (img, cb) ->
   if img.width and img.height
+    #dlog('imgwidth and imgheight are given in byImage')
     copy(img, cb)
   else
-    img.onload(()->Canio.byImage(img,cb))
-    return false
+    #dlog('width and height are not given')
+    cbr(cb, 'Canio.byImage (only if the image is not "loaded")')
+    if isFunction(cb)
+      img.onload = ()->Canio.byImage(img,cb)
+    return true
 
 Canio.byArray = byArray = (a,w,h,cb) ->
   [c, ctx, imgd, pxs] = newToolbox(w,h)
@@ -89,9 +96,10 @@ Canio.byArray = byArray = (a,w,h,cb) ->
   ctx.putImageData(imgd,0,0)
   nb(cb,c)
 
-Canio.toImage = toImage = (c, cb) ->
+Canio.toImage = toImage = (c, p...) ->
+  [cb, mime]=fff(p, 'image/png')
   img = new Image()
-  img.src=c.toDataURL("image/png", "")
+  img.src=c.toDataURL(mime, "")
   nb(cb,img)
 
 Canio.toArray = toArray = (c, cb) ->
@@ -104,7 +112,11 @@ Canio.toArray = toArray = (c, cb) ->
     i=i+1
   return a
 
-#toDownload
+
+Canio.hardResize = hardResize = (c, w, h, cb) ->
+  [new_c, new_ctx]=Canio.newToolbox(w, h)
+  new_ctx.drawImage(c, 0, 0, w, h)
+  nb(cb,new_c)
 
 #resize
 Canio.resize = resize = (c, p...) ->
@@ -200,8 +212,45 @@ Canio.crop = crop = (c, p...) ->
   new_ctx.drawImage(c, crop_x, crop_y, crop_width, crop_height, 0,0,crop_width, crop_height)
   nb(cb,new_c)
 
+#RGBAFILTER
+
+Canio.rgba = rgba = (c, p...) ->
+  dlog('inrgba')
+  #dlog(p)
+  [cb, filter, extended] = fff(p, null, false)
+  dlog(typeof filter)
+  if not isFunction(filter)
+    dlog('filter not a function')
+    return false
+  [c, ctx, imgd, pxs] = getToolbox(c)
+  [w,h]=[c.width,c.height]
+  dlog('rgba canvas size')
+  dlog([w,h])
+  u8 = new Uint8Array(new ArrayBuffer(pxs.length))
+  y = 0
+  dlog('rgbabeforewhile')
+  while y < h
+    x = 0
+    while x < w
+      i = (y*w + x) * 4
+      r = i
+      g = i+1
+      b = i+2
+      a = i+3
+      if not extended
+        [u8[r],u8[g],u8[b],u8[a]] = filter(pxs[r],pxs[g],pxs[b],pxs[a], i)
+      else
+        [u8[r],u8[g],u8[b],u8[a]] = filter(pxs[r],pxs[g],pxs[b],pxs[a], i, c)
+      x=x+1
+    y=y+1
+  new_c = Canio.byArray(u8, w,h)
+  dlog('rgba return value')
+  dlog(new_c)
+  nb(cb, new_c)
 
 
+#toDownload
+#
 
 
 #multieffects
@@ -209,25 +258,26 @@ Canio.crop = crop = (c, p...) ->
 
 
 #EFFECTS
-Canio.rotateRight = rotateRight = (c, cb) ->
+# EFFECTS are only available via a Canio method
+Canio.rotateRight = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(90*Math.PI/180)
   new_ctx.drawImage(c,0,c.height*-1)
   nb(cb,c)
 
-Canio.rotateLeft = rotateLeft = (c,cb) ->
+Canio.rotateLeft =  (c,cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(-90*Math.PI/180)
   new_ctx.drawImage(c,c.width*-1,0)
   nb(cb,c)
 
-Canio.flip = flip = (c, cb) ->
+Canio.flip = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.rotate(Math.PI)
   new_ctx.drawImage(c,c.width*-1,c.height*-1)
   nb(cb,c)
 
-Canio.mirror = mirror = (c, cb) ->
+Canio.mirror = (c, cb) ->
   [new_c, new_ctx] = newToolbox(c)
   new_ctx.translate(c2.width / 2,0)
   new_ctx.scale(-1, 1)
@@ -247,6 +297,11 @@ Canio.mirror = mirror = (c, cb) ->
 #TODO
 #
 #Canio.noise(c, amount, callback) #amount 0 to n
+
+
+
+
+
 Canio.noise = (c, p...) ->
   [cb, amount]=fff(p,20)
   [new_c, new_ctx, new_imgd, new_pxs]=getToolbox(copy(c))
@@ -290,41 +345,7 @@ Canio.vignette = (c, p...) ->
 # Canio.viewfinder
 #
 
-#RGBAFILTER
 
-Canio.rgba = rgba = (c, p...) ->
-  dlog('inrgba')
-  #dlog(p)
-  [cb, filter, extended] = fff(p, null, false)
-  dlog(typeof filter)
-  if not isFunction(filter)
-    dlog('filter not a function')
-    return false
-  [c, ctx, imgd, pxs] = getToolbox(c)
-  [w,h]=[c.width,c.height]
-  dlog('rgba canvas size')
-  dlog([w,h])
-  u8 = new Uint8Array(new ArrayBuffer(pxs.length))
-  y = 0
-  dlog('rgbabeforewhile')
-  while y < h
-    x = 0
-    while x < w
-      i = (y*w + x) * 4
-      r = i
-      g = i+1
-      b = i+2
-      a = i+3
-      if not extended
-        [u8[r],u8[g],u8[b],u8[a]] = filter(pxs[r],pxs[g],pxs[b],pxs[a])
-      else
-        [u8[r],u8[g],u8[b],u8[a]] = filter(pxs[r],pxs[g],pxs[b],pxs[a], c, i)
-      x=x+1
-    y=y+1
-  new_c = Canio.byArray(u8, w,h)
-  dlog('rgba return value')
-  dlog(new_c)
-  nb(cb, new_c)
 
 Canio.saturate =  (c, p...) ->
   [cb, t]=fff(p, 0.3)
@@ -341,6 +362,113 @@ Canio.saturate =  (c, p...) ->
 Canio.desaturate = (c, p...) ->
   [cb, t]=fff(p, 0.7)
   Canio.saturate(c,1-t,cb)
+
+Canio.merge = (c, p...) ->
+  dlog('inmerge')
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  dlog('inmerge2')
+  dlog(picture)
+  #hr = (picture, w, h) ->
+  #  [p_c, p_ctx]=Canio.newToolbox(w,h)
+  #  p_ctx.drawImage(picture, 0, 0, w, h)
+  #  p_c
+  #p_c=hr(picture, c.width, c.height)
+  #p_c=Canio.hardResize(picture, c.width, c.height)
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter=(r,g,b,a,i) ->
+    #[pr, pg, pb]=[p_pxs[i], p_pxs[i+1], p_pxs[i+2]]
+    red = clamp((r*p_pxs[i])/255)
+    green = clamp((g*p_pxs[i+1])/255)
+    blue = clamp((b*p_pxs[i+2])/255)
+    #alpha = (a*p_pxs[i+3])/2
+    #return [red, green, blue, a]
+    return [red,green,blue,a]
+  Canio.rgba(c, cb, filter)
+
+Canio.lightmerge = (c, p...) ->
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter = (r,g,b,a,i) ->
+    r = (if r > p_pxs[i] then r else p_pxs[i])
+    g = (if g > p_pxs[i+1] then g else p_pxs[i+1])
+    b = (if b > p_pxs[i+2] then b else p_pxs[i+2])
+    return [r,g,b,a]
+  Canio.rgba(c, cb, filter)
+
+
+Canio.darkmerge = (c, p...) ->
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter = (r,g,b,a,i) ->
+    r = (if r < p_pxs[i] then r else p_pxs[i])
+    g = (if g < p_pxs[i+1] then g else p_pxs[i+1])
+    b = (if b < p_pxs[i+2] then b else p_pxs[i+2])
+    return [r,g,b,a]
+  Canio.rgba(c, cb, filter)
+
+getGrayscaleValue = (r,g,b) -> r*0.3+g*0.59+b*0.11
+
+Canio.lightermerge = (c, p...) ->
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter = (r,g,b,a,i) ->
+    lighter = (if getGrayscaleValue(r,g,b)>getGrayscaleValue( p_pxs[i], p_pxs[i+1], p_pxs[i+2]) then true else false)
+    r = (if lighter then r else p_pxs[i])
+    g = (if lighter then g else p_pxs[i+1])
+    b = (if lighter then b else p_pxs[i+2])
+    return [r,g,b,a]
+  Canio.rgba(c, cb, filter)
+
+Canio.darkermerge = (c, p...) ->
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter = (r,g,b,a,i) ->
+    darker = (if getGrayscaleValue(r,g,b)<getGrayscaleValue( p_pxs[i], p_pxs[i+1], p_pxs[i+2]) then true else false)
+    r = (if darker then r else p_pxs[i])
+    g = (if darker then g else p_pxs[i+1])
+    b = (if darker then b else p_pxs[i+2])
+    return [r,g,b,a]
+  Canio.rgba(c, cb, filter)
+
+Canio.blend = (c, p...) ->
+  [cb, picture, amount] = fff(p, null, 0.5)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  neg_amount = 1 - amount
+  filter=(r,g,b,a,i) ->
+    c = null
+    #[pr, pg, pb]=[p_pxs[i], p_pxs[i+1], p_pxs[i+2]]
+    red = clamp((r*neg_amount)+(p_pxs[i]*amount))
+    green = clamp((g*neg_amount)+(p_pxs[i+1]*amount))
+    blue = clamp((b*neg_amount)+(p_pxs[i+2]*amount))
+    return [red, green, blue, a]
+  Canio.rgba(c, cb, filter)
+
+
+Canio.viewfinder = (c, cb) ->
+  cbr(cb, 'Canio.viewfinder')
+  pic = new Image()
+  pic.onload = () -> Canio.merge(c, pic, cb)
+  pic.src = Caniodataurls.viewfinder
+  return true
+
+Canio.oldschool = (c, cb) ->
+  cbr(cb, 'Canio.oldschool')
+  pic = new Image()
+  pic.onload = () -> Canio.lightermerge(c, pic, cb)
+  pic.src = Caniodataurls.oldschool
+  return true
+
+
+
+
+
+
 
 #Canio.heatcam =  (c, p...) ->
 #  [cb, t]=fff(p, 0.3)
@@ -368,7 +496,7 @@ Canio.curve = (c, p...) ->
   filter = (r,g,b,a) -> [rc[r],rc[g],rc[b],a]
   Canio.rgba(c,cb,filter)
 
-Canio.screen = screen = (c, p...) ->
+Canio.screen =  (c, p...) ->
   [cb, rr, gg, bb, strength] = fff(p, 227, 12, 169, 0.2)
   filter = (r,g,b,a) ->
     [
@@ -378,14 +506,17 @@ Canio.screen = screen = (c, p...) ->
       a
     ]
   Canio.rgba(c,cb,filter)
-#PRIVATE IMAGE FILTER WRAPPER HELPFER
 
+#PRIVATE IMAGEFILTERS WRAPPER HELPFER
+
+#imagefilters wrapper
 ifw = (c, cb, image_filters_func, p...) ->
   [c,ctx,imgd, px] = getToolbox(c)
   [new_c,new_ctx,new_imgd, new_px] = newToolbox(c)
   nb(() -> new_ctx.putImageData(image_filters_func(imgd, p...),0,0))
   nb(cb,new_c)
 
+#make IMAGEFILTERS wrapper
 mF = (image_filters_func, defaults...) ->
   return (c, p...) ->
     defaulted_p = fff(p,defaults)
