@@ -3,6 +3,7 @@ fs     = require 'fs'
 
 appFiles  = [
   # omit src/ and .coffee to make the below lines a little shorter
+#  'dataurls'
   'main'
 ]
 
@@ -24,6 +25,6 @@ task 'build', 'Build single application file from source files', ->
           console.log 'Done.'
 
 task 'minify', 'Minify the resulting application file after build', ->
-  exec 'java -jar "/Users/franzseo/bin/compiler.jar" --compilation_level SIMPLE_OPTIMIZATIONS --js lib/ImageFilters.js lib/dev.js --js_output_file lib/min.js', (err, stdout, stderr) ->
+  exec 'java -jar "/Users/franzseo/bin/compiler.jar" --compilation_level SIMPLE_OPTIMIZATIONS --js lib/canio_imagefilters_fork.js lib/dev.js --js_output_file lib/min.js', (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr

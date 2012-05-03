@@ -2,7 +2,7 @@
 <html> <head>
 <title>Canio - Functional Canvas Lib</title>
 <script src="lib/jquery-1.7.2.min.js"></script>
-<script src="lib/ImageFilters.js"></script>
+<script src="lib/canio_imagefilters_fork.js"></script>
 <script src="lib/dataurls.js"></script>
 <script src="lib/main.js"></script>
 <script src="lib/example.js"></script>
@@ -200,10 +200,16 @@ amount ... amount of noise, from 0 to n
 <hr>
 <h3>Canio.oil(canvas, range, levels, callback)</h3>
 <div id="oil_placeholder"></div>
-<code></code>
+<code>  $(img).on('canvasready', (e,c)->
+    oilbutton = $('&lt;button&gt;Click Me!&lt;/button&gt;').on('click', () ->
+      Canio.oil(c, 4, 30, (c) ->$('#oil_placeholder').html(c)
+      )
+    )
+    $('#oil_placeholder').html(oilbutton)
+  )</code>
 
 
 <br><br><br>
 <hr>
-<!-- hhmts start -->Last modified: Wed May  2 20:46:30 EST 2012 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Wed May  2 21:22:28 EST 2012 <!-- hhmts end -->
 </body> </html>

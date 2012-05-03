@@ -1,5 +1,5 @@
 Canio = {};
-Canio._DEBUG_ = _DEBUG_ = false;
+Canio._DEBUG_ = _DEBUG_ = true;
 
 #PRIVATE HELPER
 
@@ -377,7 +377,16 @@ Canio.merge = (c, p...) ->
 
 #just writs one image over the other
 #using standard drawing methods
+# omly makes sense if the second image has transparent pixels
+# mode can by any of these https://developer.mozilla.org/en/Canvas_tutorial/Compositing
 Canio.hardmerge = (c, p...) ->
+  [cb, picture, mode] = fff(p, null, 'source-over')
+  [new_c, new_ctx, new_imgd, new_pxs]=Canio.getToolbox(copy(c))
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  new_ctx.globalCompositeOperation = mode;
+  new_ctx.drawImage(p_c,0,0)
+  nb(cb, new_c)
+
 
 Canio.negmerge = (c, p...) ->
   dlog('inmerge')
@@ -465,10 +474,11 @@ Canio.viewfinder = (c, cb) ->
 Canio.oldschool = (c, cb) ->
   cbr(cb, 'Canio.oldschool')
   pic = new Image()
-  pic.onload = () -> Canio.lightermerge(c, pic, 1, cb)
+  pic.onload = () -> Canio.lightermerge(c, pic, cb)
   pic.src = Caniodataurls.oldschool
   return true
 
+#multiactions
 Canio.many = (c, p...) ->
   [cb, actions, params] = fff(p)
   cbr(cb)
@@ -480,9 +490,98 @@ Canio.many = (c, p...) ->
   else
     action(c, cb, paramA)
 
+#fill a canvas with a given color
+Canio.fill = (c, p...) ->
+  [cb, rv, gv, bv] = fff(p,0,0,0)
+  Canio.rgba(c, cb, (r,g,b,a)->[clamp(rv), clamp(gv), clamp(bv), a])
 
+#adjust the r,g,b,a values via addtions
+Canio.rgbaAd = (c, p...) ->
+  [cb, rv, gv, bv, av] = fff(p,0,0,0,0)
+  Canio.rgba(c, cb, (r,g,b,a)->[clamp(a+rv),clamp(g+gv),clamp(b+bv),clamp(a+av)])
+#make all values t lighter
+Canio.adBrighter = (c, p...) ->
+  [cb, t]=fff(p,0)
+  Canio.rgbaAd(c, t, t, t, 0, cb)
+#make everything darker
+Canio.adDarker = (c, p...) ->
+  [cb, t]=fff(p,0)
+  Canio.brighter(c,t*-1,cb)
+#change the alpha value
+Canio.adOpacity = (c, p...) ->
+  [cb, t]=fff(p,0)
+  Canio.rgbaAd(c, 0,0,0,t,cb)
 
+#i like the main methods to deal with values in percentages, meaning between 0 and n
+#multiply, values should be between 0 and n
+Canio.rgbaMultiply = (c, p...) ->
+  [cb, rv, gv, bv, av] = fff(p,1,1,1,1)
+  Canio.rgba(c,cb,(r,g,b,a)->[clamp(a*av),clamp(g*gv),clamp(b*bv),clamp(a*av)])
 
+#make brighter between 0 and n
+Canio.brighter=(c,p...)->
+  [cb, p]=fff(p,1)
+  Canio.rgbaMultiply(c, p,p,p,1,cb)
+
+Canio.darker=(c,p...)->
+  [cb, p]=fff(p,1)
+  p=2-p
+  Canio.rgbaMultiply(c, p,p,p,1,cb)
+
+Canio.opacity = (c,p...) ->
+  [cb,o]=fff(p,1)
+  Canio.rgbaMultiply(c,1,1,1,o,cb)
+
+#everything above the threshold will be black, everything below will be white
+Canio.threshold = (c, p...) ->
+  [cb, t]=fff(p, 128)
+  filter = (r,g,b,a) ->
+    if r > t or g > t or b > t then c = 255 else c = 0
+    return [c,c,c,a]
+  Canio.rgba(c,cb,filter)
+
+#native posterize implementation
+Canio.posterize = (c, p...) ->
+  [cb, levels]=fff(p,5)
+  step = Math.floor(255 / levels)
+  filter = (r,g,b,a) ->
+    r2 = clamp(Math.floor(r / step) * step)
+    g2 = clamp(Math.floor(g / step) * step)
+    b2 = clamp(Math.floor(b / step) * step)
+    return [r2, g2, b2, a]
+  Canio.rgby(c,cb,filter)
+
+Canio.grayScale = (c, cb) ->
+  filter = (r,g,b,a) ->
+    average = (r+g+b)/3
+    return [average, average, average, a]
+  doRgbaFilter(c, cb, filter)
+
+Canio.tint = (c, p...) ->
+  tint_min = 85
+  tint_max = 170
+  [cb, min_r, min_g, min_b, max_r, max_b, max_g]=fff(p,tint_min,tint_min,tint_min,tint_max,tint_max,tint_max)
+  if min_r is max_r then max_r = max_r+1
+  if min_g is max_g then max_g = max_g+1
+  if min_b is max_b then max_b = max_b+1
+  filter = (r,g,b,a) ->
+    r2 = clamp((r - min_r) * ((255 / (max_r - min_r))))
+    g2 = clamp((g - min_r) * ((255 / (max_g - min_g))))
+    b2 = clamp((b - min_b) * ((255 / (max_b - min_b))))
+    return [r2,g2,b2,a]
+  Canio.rgba(c, cb, filter)
+
+Canio.sepia = (c, cb) ->
+  filter = (r,g,b,a) ->
+    r2 = (r * 0.393) + (g * 0.769) + (b * 0.189)
+    g2 = (r * 0.349) + (g * 0.686) + (b * 0.168)
+    b2 = (r * 0.272) + (g * 0.534) + (b * 0.131)
+    return [clamp(r2), clamp(g2), clamp(b2), a]
+  Canio.rgba(c, cb, filter)
+
+Canio.blackWhite = (c, cb) ->
+  filter = (r,g,b,a) -> factor = (r * 0.3) + (g * 0.59) + (b * 0.11); return [factor, factor, factor, a]
+  Canio.rgba(c, cb, filter)
 
 
 
@@ -609,7 +708,7 @@ Canio.enrich = mF(ImageFilters.Enrich)
 Canio.gamma = mF(ImageFilters.Gamma, 2) #between 0 and 3
 
 #ImageFilters.GrayScale (srcImageData)
-Canio.grayscale = mF(ImageFilters.Grayscale)
+#NOT NOW NATIVE #Canio.grayscale = mF(ImageFilters.Grayscale)
 
 #ImageFilters.HSLAdjustment (srcImageData, hueDelta, satDelta, lightness) #beteen -180 and +180
 Canio.HSLAdjustment =mF(ImageFilters.HSLAdjustment, 0, 0, 0)
@@ -620,15 +719,15 @@ Canio.mosaic = mF(ImageFilters.Mosaic, 10)
 #ImageFilters.Oil (srcImageData, range, levels)
 Canio.oil = mF(ImageFilters.Oil, 4, 30) #range between 1 and 5(?), levels between 1 and 256
 #ImageFilters.OpacityFilter (srcImageData, opacity)
-Canio.opacity =mF(ImageFilters.OpacityFilter, 10) #?
-#ImageFilters.Posterize (srcImageData, levels)
-Canio.posterize = mF(ImageFilters.Posterize, 8)
+#NOT; NOW NATIVE # Canio.opacity =mF(ImageFilters.OpacityFilter, 10) #?
+#NOT NOW NATIVE #ImageFilters.Posterize (srcImageData, levels)
+#Canio.posterize = mF(ImageFilters.Posterize, 8)
 
 #NOT #ImageFilters.Rescale (srcImageData, scale)
 #NOT #ImageFilters.Resize (srcImageData, width, height)
 #NOT #ImageFilters.ResizeNearestNeighbor (srcImageData, width, height)
 #ImageFilters.Sepia srcImageData)
-Canio.sepia = mF(ImageFilters.Sepia)
+#NOT #NOT NATIVE #Canio.sepia = mF(ImageFilters.Sepia)
 
 #ImageFilters.Sharpen (srcImageData, factor)
 Canio.sharpen = mF(ImageFilters.Sharpen, 3) #between 1 and n
