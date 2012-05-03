@@ -96,17 +96,33 @@ $(window).load(() ->
       $('#oldschool_placeholder').html(c)
       )
     )
+  #many
+  $(img).on('canvasready', (e,c)->
+    actions =[ Canio.curve, Canio.scale, Canio.screen, Canio.saturate, Canio.vignette, Canio.oldschool, Canio.toImage]
+    params = [[],0.8,[227, 12, 169, 0.40],0.9,[0.2, 0.8],[],[]]
+    Canio.many(c,actions, params, (c) ->
+      $('#many_placeholder').html(c)
+      )
+    )
+
+  #screen
+  $(img).on('canvasready', (e,c)->
+    oilbutton = $('<button>Oil</button>').on('click', () -> Canio.oil(c, 4, 30, (c) ->$('#oil_placeholder').html(c)))
+    $('#oil_placeholder').html(oilbutton)
+
+    )
+  #create the starting canvas
   Canio.byImage(img,(c) ->
     $('#byImage_placeholder').html(c)
     c.id='canvasbyimage'
     $(img).trigger('canvasready', c)
     )
 
-  Canio.byImage($('#viewfinder')[0],(c) ->
-    Canio.toImage(c, (ii)->
-      $('#byImage_placeholder').html(ii)
-      )
-    )
+  #Canio.byImage($('#viewfinder')[0],(c) ->
+  #  Canio.toImage(c, (ii)->
+  #    $('#byImage_placeholder').html(ii)
+  #    )
+  #  )
   #  $('#byImage_placeholder').html(c)
   #  #c.id='canvasbyimage'
  #  Canio.resize(c, 400, 400, (c) ->

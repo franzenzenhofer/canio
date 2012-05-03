@@ -1,5 +1,5 @@
 Canio = {};
-Canio._DEBUG_ = _DEBUG_ = true;
+Canio._DEBUG_ = _DEBUG_ = false;
 
 #PRIVATE HELPER
 
@@ -367,22 +367,27 @@ Canio.merge = (c, p...) ->
   dlog('inmerge')
   [cb, picture] = fff(p, null)
   until picture then return false
-  dlog('inmerge2')
-  dlog(picture)
-  #hr = (picture, w, h) ->
-  #  [p_c, p_ctx]=Canio.newToolbox(w,h)
-  #  p_ctx.drawImage(picture, 0, 0, w, h)
-  #  p_c
-  #p_c=hr(picture, c.width, c.height)
-  #p_c=Canio.hardResize(picture, c.width, c.height)
   [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
   filter=(r,g,b,a,i) ->
-    #[pr, pg, pb]=[p_pxs[i], p_pxs[i+1], p_pxs[i+2]]
     red = clamp((r*p_pxs[i])/255)
     green = clamp((g*p_pxs[i+1])/255)
     blue = clamp((b*p_pxs[i+2])/255)
-    #alpha = (a*p_pxs[i+3])/2
-    #return [red, green, blue, a]
+    return [red,green,blue,a]
+  Canio.rgba(c, cb, filter)
+
+#just writs one image over the other
+#using standard drawing methods
+Canio.hardmerge = (c, p...) ->
+
+Canio.negmerge = (c, p...) ->
+  dlog('inmerge')
+  [cb, picture] = fff(p, null)
+  until picture then return false
+  [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
+  filter=(r,g,b,a,i) ->
+    red = clamp((r/p_pxs[i])*255)
+    green = clamp((g/p_pxs[i+1])*255)
+    blue = clamp((b/p_pxs[i+2])*255)
     return [red,green,blue,a]
   Canio.rgba(c, cb, filter)
 
@@ -441,8 +446,8 @@ Canio.blend = (c, p...) ->
   [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
   neg_amount = 1 - amount
   filter=(r,g,b,a,i) ->
-    c = null
     #[pr, pg, pb]=[p_pxs[i], p_pxs[i+1], p_pxs[i+2]]
+    #alpha
     red = clamp((r*neg_amount)+(p_pxs[i]*amount))
     green = clamp((g*neg_amount)+(p_pxs[i+1]*amount))
     blue = clamp((b*neg_amount)+(p_pxs[i+2]*amount))
@@ -460,9 +465,21 @@ Canio.viewfinder = (c, cb) ->
 Canio.oldschool = (c, cb) ->
   cbr(cb, 'Canio.oldschool')
   pic = new Image()
-  pic.onload = () -> Canio.lightermerge(c, pic, cb)
+  pic.onload = () -> Canio.lightermerge(c, pic, 1, cb)
   pic.src = Caniodataurls.oldschool
   return true
+
+Canio.many = (c, p...) ->
+  [cb, actions, params] = fff(p)
+  cbr(cb)
+  action = actions?.shift() ? null
+  paramA = params?.shift() ? []
+  until Array.isArray(paramA) then paramA = [paramA]
+  if actions.length > 0
+    action(c, ((c)->Canio.many(c, cb, actions, params)), paramA...)
+  else
+    action(c, cb, paramA)
+
 
 
 
@@ -601,7 +618,7 @@ Canio.invert = mF(ImageFilters.Invert)
 #ImageFilters.Mosaic (srcImageData, blockSize)
 Canio.mosaic = mF(ImageFilters.Mosaic, 10)
 #ImageFilters.Oil (srcImageData, range, levels)
-Canio.oil = mF(ImageFilters.Oil, 2, 32) #range between 1 and 5(?), levels between 1 and 256
+Canio.oil = mF(ImageFilters.Oil, 4, 30) #range between 1 and 5(?), levels between 1 and 256
 #ImageFilters.OpacityFilter (srcImageData, opacity)
 Canio.opacity =mF(ImageFilters.OpacityFilter, 10) #?
 #ImageFilters.Posterize (srcImageData, levels)
