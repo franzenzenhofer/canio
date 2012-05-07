@@ -113,6 +113,38 @@ $(window).load(() ->
     )
     $('#oil_placeholder').html(oilbutton)
   )
+
+  #oil
+  $(img).on('canvasready', (e,c)->
+    button = $('<button>Click Me!</button>').on('click', () ->
+      Canio.removeNoise(c, (c) ->$('#removenoise_placeholder').html(c)
+      )
+    )
+    $('#removenoise_placeholder').html(button)
+  )
+#c64 = "0,0,0 255,255,255 116,67,53 124,172,186 123,72,144 100,151,79 64,50,133 191,205,122 123,91,47 79,69,0 163,114,101 80,80,80 120,120,120 164,215,142 120,106,189 159,159,159".split(" ");
+  #schemer border
+  $(img).on('canvasready', (e,c)->
+    Canio.schemer(c,
+      [127,255],
+      [127,255],
+      [127,255],
+      [],
+      [0,255],
+      [255,0],
+      [0,0],
+      (c) ->
+        $('#schemer_placeholder').html(c)
+      )
+    )
+
+  #reduceAndReplace
+  $(img).on('canvasready', (e,c)->
+    Canio.reduceAndReplace(c, 8, (c) ->
+      $('#reduceandreplace_placeholder').html(c)
+      )
+    )
+
   #create the starting canvas
   Canio.byImage(img,(c) ->
     $('#byImage_placeholder').html(c)

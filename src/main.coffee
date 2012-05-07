@@ -23,22 +23,34 @@ fff = (params,defaults...) ->
   first_func = null
   p2 = []
   i = 0
-  while i < params.length or i < defaults.length
-    if typeof params[i] is 'function' and not first_func
-        first_func = params[i]
+  #while i < params.length or i < defaults.length
+  #  if typeof params[i] is 'function' and not first_func
+  #      first_func = params[i]
+  #    else
+  #      if params[i] isnt null and params[i] isnt undefined
+  #        p2.push(params[i])
+  #      else
+  #        p2.push(defaults[i])
+  #  i=i+1
+  #
+  for par in params
+    do (par) ->
+      if isFunction(par) and not first_func
+        first_func = par
       else
-        if params[i] isnt null and params[i] isnt undefined
-          p2.push(params[i])
-        else
-          p2.push(defaults[i])
-    i=i+1
+        p2.push(par)
+
+  for d, i in defaults
+    do (d) ->
+      p2[i] ?= d
+
   if not first_func
     # throw {name : "NoCallbackGiven", message : "This function needs a callback to work properly"};
     # return false
     # we return a dummy callback
     first_func = (c)->null
   p2.unshift(first_func)
-  dlog(p2)
+  #dlog(p2)
   return p2
 
 #private image data optimized clamp
@@ -78,10 +90,10 @@ Canio.copy = copy = (c, cb) ->
 
 Canio.byImage = byImage =  (img, cb) ->
   if img.width and img.height
-    #dlog('imgwidth and imgheight are given in byImage')
+    ##dlog('imgwidth and imgheight are given in byImage')
     copy(img, cb)
   else
-    #dlog('width and height are not given')
+    ##dlog('width and height are not given')
     cbr(cb, 'Canio.byImage (only if the image is not "loaded")')
     if isFunction(cb)
       img.onload = ()->Canio.byImage(img,cb)
@@ -142,64 +154,64 @@ Canio.resize = resize = (c, p...) ->
     if c.height > c.width
       first='height'
       second='width'
-      dlog('hochformat')
+      #dlog('hochformat')
     else
-      dlog('height'+c.height)
-      dlog('width'+c.width)
+      #dlog('height'+c.height)
+      #dlog('width'+c.width)
       first='width'
       second='height'
-      dlog('querformat')
+      #dlog('querformat')
   console.log('hallo')
-  dlog('first: '+first )
-  dlog('second: '+second )
-  dlog(c[first])
+  #dlog('first: '+first )
+  #dlog('second: '+second )
+  #dlog(c[first])
   #return c
   #scale down
   #w=img.height*(default_width / img.width)
   if max[first] and (c[first] > max[first] or c[second] > max[second])
-    dlog('a')
+    #dlog('a')
     r[second]=c[second]*max[first]/c[first]
     r[first]=max[first]
     if r[second]>max[second]
-      dlog('b')
+      #dlog('b')
       r[first]=c[first]*max[second]/c[second]
       r[second]=max[second]
 
   #scale down
   #if c[first] > max[first]
-  #  dlog(first+'>'+max[first])
+  #  #dlog(first+'>'+max[first])
   #  r[first]=max[first]
   #  r[second]=c[second]*max[first]/c[first]
   #  if r[second] > max[second]
   #
   # #scale up
   else if min[first] and (c[first] < min[first] or c[second] > min[second])
-    dlog('c')
+    #dlog('c')
     r[first]=c[first] * min[second] / c[second]
     r[second]=min[second]
     if r[first]<min[first]
-      dlog('d')
+      #dlog('d')
       r[second]=c[second]*min[first]/c[first]
       r[first]=min[first]
   else
-    dlog('e')
+    #dlog('e')
     r[first]=c[first]
     r[second]=c[second]
-    dlog('f')
+    #dlog('f')
 
   #cd.context.drawImage(img, 0,0, newwidth, newheight)
-  #dlog('inresizedebugoutput')
-  #dlog((c?.getAttribute('id') or c?.getAttribute('source')))
+  ##dlog('inresizedebugoutput')
+  ##dlog((c?.getAttribute('id') or c?.getAttribute('source')))
   [new_c, new_ctx]=newToolbox(r.width, r.height, (c?.getAttribute('id') or c?.getAttribute('origin')))
   new_ctx.drawImage(c, 0,0, r.width, r.height)
-  dlog('g')
-  dlog(new_c)
-  dlog(cb)
+  #dlog('g')
+  #dlog(new_c)
+  #dlog(cb)
   return nb(cb, new_c)
 
 Canio.scale = scale = (c, p...) ->
   [cb, x]=fff(p, 1)
-  dlog('scale it by '+x)
+  #dlog('scale it by '+x)
   new_width = c.width*x
   new_height = c.height*x
   [new_c, new_ctx]=newToolbox(new_width, new_height, (c?.getAttribute('id') or c?.getAttribute('origin')))
@@ -213,30 +225,24 @@ Canio.crop = crop = (c, p...) ->
   nb(cb,new_c)
 
 #RGBAFILTER
-
 Canio.rgba = rgba = (c, p...) ->
-  dlog('inrgba')
-  #dlog(p)
   [cb, filter, extended] = fff(p, null, false)
-  dlog(typeof filter)
   if not isFunction(filter)
-    dlog('filter not a function')
+    #dlog('filter not a function')
     return false
   [c, ctx, imgd, pxs] = getToolbox(c)
   [w,h]=[c.width,c.height]
-  dlog('rgba canvas size')
-  dlog([w,h])
   u8 = new Uint8Array(new ArrayBuffer(pxs.length))
   y = 0
-  dlog('rgbabeforewhile')
   while y < h
     x = 0
+    yw = y*w
+    #yw4= yw4
     while x < w
-      i = (y*w + x) * 4
-      r = i
-      g = i+1
-      b = i+2
-      a = i+3
+      #i = (y*w + x) * 4
+      i = (yw+x)*4
+      #i= yw4+x*4
+      r = i; g = i+1; b = i+2;a = i+3
       if not extended
         [u8[r],u8[g],u8[b],u8[a]] = filter(pxs[r],pxs[g],pxs[b],pxs[a], i)
       else
@@ -244,8 +250,6 @@ Canio.rgba = rgba = (c, p...) ->
       x=x+1
     y=y+1
   new_c = Canio.byArray(u8, w,h)
-  dlog('rgba return value')
-  dlog(new_c)
   nb(cb, new_c)
 
 
@@ -364,7 +368,7 @@ Canio.desaturate = (c, p...) ->
   Canio.saturate(c,1-t,cb)
 
 Canio.merge = (c, p...) ->
-  dlog('inmerge')
+  #dlog('inmerge')
   [cb, picture] = fff(p, null)
   until picture then return false
   [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
@@ -389,7 +393,7 @@ Canio.hardmerge = (c, p...) ->
 
 
 Canio.negmerge = (c, p...) ->
-  dlog('inmerge')
+  #dlog('inmerge')
   [cb, picture] = fff(p, null)
   until picture then return false
   [p_c, p_ctx, p_imgd, p_pxs]=Canio.getToolbox(Canio.hardResize(picture, c.width, c.height))
@@ -540,6 +544,69 @@ Canio.threshold = (c, p...) ->
     return [c,c,c,a]
   Canio.rgba(c,cb,filter)
 
+Canio.schemer = (c, p...) ->
+  #dlog('in schemer!!!')
+  dlog(fff(p, 1,2,3,4,5,6,7,8, [], []))
+  [cb, rA, gA, bA, aA, rV, gV, bV, aV] = fff(p, [],[],[],[],[],[],[],[])
+  compare = (a,b) -> a-b
+  rA = rA.sort(compare)
+  dlog(rA)
+  gA = gA.sort(compare)
+  bA = bA.sort(compare)
+  aA = aA.sort(compare)
+  #rV = rV.sort(compare)
+  #gV = gV.sort(compare)
+  #bV = bV.sort(compare)
+  #aV = aV.sort(compare)
+
+  filter = (r,g,b,a) ->
+    [r2,g2,b2,a2]=[r,g,b,a]
+    if rA.length > 0
+      for r_threshold,i in rA
+          if r <= r_threshold
+            r2 = rV[i] ? r_threshold
+            break
+
+
+    if gA.length > 0
+      for g_threshold, i in gA
+          if g <= g_threshold
+            g2 = gV[i] ? g_threshold
+            break
+
+
+    if bA.length > 0
+      for b_threshold, i in bA
+          if b <= b_threshold
+            b2 = bV[i] ? b_threshold
+            break
+
+    if aA.length > 0
+      for a_threshold, i in aA
+          if a <= a_threshold
+            a2 = aV[i] ? a_threshold
+            break
+    #until b2 is 127 or b2 is 255 then dlog(b2)
+    return [clamp(r2), clamp(g2), clamp(b2), clamp(a2)]
+  Canio.rgba(c,cb,filter)
+
+Canio.reduceAndReplace = (c, p...) ->
+  c64 = "0,0,0 255,255,255 116,67,53 124,172,186 123,72,144 100,151,79 64,50,133 191,205,122 123,91,47 79,69,0 163,114,101 80,80,80 120,120,120 164,215,142 120,106,189 159,159,159".split(" ");
+  [cb, nr_of_buckets, replacementA] = fff(p, 16, c64)
+  filter = (r,g,b,a) ->
+    brightness = (3*r+4*g+b)>>>3
+    #the lower the bucket number, the darker
+    bucket_nr = Math.floor(brightness / 256 * nr_of_buckets)
+    #we need to sort the replacementA by reverse-brightness, too
+    rgb = replacementA[bucket_nr]
+    [r2,g2,b2]=rgb.split(',')
+    return [r2, g2, b2, a]
+  Canio.rgba(c,cb,filter)
+
+#funny func, returns a <pre class="ascii"> tag
+Canio.ascii = (c, p...) ->
+  [cb, ascii_string] = fff(p, '@GLftli;:,.  ')
+
 #native posterize implementation
 Canio.posterize = (c, p...) ->
   [cb, levels]=fff(p,5)
@@ -582,6 +649,83 @@ Canio.sepia = (c, cb) ->
 Canio.blackWhite = (c, cb) ->
   filter = (r,g,b,a) -> factor = (r * 0.3) + (g * 0.59) + (b * 0.11); return [factor, factor, factor, a]
   Canio.rgba(c, cb, filter)
+
+Canio.solarize = (c, cb) ->
+  filter = (r,g,b,a) -> [
+    (if r > 127 then 255-r else r)
+    (if g > 127 then 255-g else g)
+    (if b > 127 then 255-b else b)
+    a
+    ]
+  Canio.rgba(c,cb,filter)
+
+Canio.removeNoise = (c, p...) ->
+  [cb] = fff(p)
+  [c, ctx, imgd, pxs] = getToolbox(c)
+  [w,h]=[c.width,c.height]
+  u8 = new Uint8Array(new ArrayBuffer(pxs.length))
+  y = 0
+  while y < h
+    nextY = (if (y is h) then y else y+1)
+    prevY = (if (y is 0) then 0 else y-1)
+    x = 0
+    yw = y*w
+    while x < w
+      i = (yw + x) * 4
+      nextX = (if (x is w) then x else x+1)
+      prevX = (if (x is 0) then 0 else x-1)
+      iNext = (nextY*w+nextX)*4
+      iPrev = (prevY*w+nextX)*4
+
+      r = i; g = i+1; b = i+2; a = i+3
+
+      minR = maxR = pxs[iPrev]
+      r1 = pxs[r-4]; r2 = pxs[r+4]
+      r3 = pxs[iNext]
+      if (r1 < minR) then minR = r1
+      if (r2 < minR) then minR = r2
+      if (r3 < minR) then minR = r3
+      if (r1 > maxR) then maxR = r1
+      if (r2 > maxR) then maxR = r2
+      if (r3 > maxR) then maxR = r3
+
+      minG = maxG = pxs[iPrev+1]
+      g1 = pxs[g-4]; g2 = pxs[g+4]
+      g3 = pxs[iNext+1]
+      if (g1 < minG) then minG = g1
+      if (g2 < minG) then minG = g2
+      if (g3 < minG) then minG = g3
+      if (g1 > maxG) then maxG = g1
+      if (g2 > maxG) then maxG = g2
+      if (g3 > maxG) then maxG = g3
+
+      minB = maxB = pxs[iPrev+2]
+      b1 = pxs[b-4]; b2 = pxs[b+4]
+      b3 = pxs[iNext+2]
+      if (b1 < minB) then minB = b1
+      if (b2 < minB) then minB = b2
+      if (b3 < minB) then minB = b3
+      if (b1 > maxB) then maxB = b1
+      if (b2 > maxB) then maxB = b2
+      if (b3 > maxB) then maxB = b3
+
+      if r > maxR
+        u8[r] = maxR
+      else if r < minR
+        u8[r] = minR
+      if g > maxG
+        u8[g] = maxG
+      else if g < minG
+        u8[g] = minG
+      if b > maxB
+        u8[b] = maxB
+      else if b < minB
+        u8[b] = minB
+      u8[a]=pxs[a]
+      x=x+1
+    y=y+1
+  new_c = Canio.byArray(u8, w,h)
+  nb(cb, new_c)
 
 
 
@@ -733,7 +877,7 @@ Canio.oil = mF(ImageFilters.Oil, 4, 30) #range between 1 and 5(?), levels betwee
 Canio.sharpen = mF(ImageFilters.Sharpen, 3) #between 1 and n
 
 #ImageFilters.Solarize (srcImageData)
-Canio.solarize = mF(ImageFilters.Solarize)
+#NOT# NOW native Canio.solarize = mF(ImageFilters.Solarize)
 #NOT #ImageFilters.Transpose (srcImageData)
 #ImageFilters.Twril (srcImageData, centerX, centerY, radius, angle, edge, smooth)
 Canio.twirl = mF(ImageFilters.Twril, 0.5, 0.5, 100, 360) #center between 0 and 1 (ratio to original), radius in peixel, angle # forget edge and smooth
