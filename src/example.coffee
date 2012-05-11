@@ -140,8 +140,18 @@ $(window).load(() ->
 
   #reduceAndReplace
   $(img).on('canvasready', (e,c)->
-    Canio.reduceAndReplace(c, 8, (c) ->
+    Canio.reduceAndReplace(c, [[0,0,0], [255,255,255], [255,0,0], [0,255,0], [0,0,255]], (c) ->
+    #Canio.reduceAndReplace(c, (c) ->
+
       $('#reduceandreplace_placeholder').html(c)
+      )
+    )
+
+  $(img).on('canvasready', (e,c)->
+    #applyIfRgba = (c, canio_filter, canio_filter_arguments, if_filter, cb)
+    Canio.applyIfRgba(c, Canio.blackWhite, [], ((r,g,b,a,i) ->
+      (if (r>g or b>g) then true else false)), (c) ->
+      $('#applyifrgba_placeholder').html(c)
       )
     )
 
